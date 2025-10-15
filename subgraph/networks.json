@@ -1,0 +1,14 @@
+{
+  "base-sepolia": {
+    "Lit3Ledger": {
+      "address": "0xEE755229Db8e2DAA370D88f380EAC46329B66806",
+      "startBlock": 32398558
+    }
+  },
+  "base": {
+    "Lit3Ledger": {
+      "address": "0x52196f568dDCb414006349E09e04947cf0961a90",
+      "startBlock": 36141623
+    }
+  }
+}

@@ -1,0 +1,46 @@
+type Entry @entity(immutable: true) {
+  id: ID!
+  entryIndex: BigInt!
+  title: String!
+  source: String!
+  timestamp1: String!
+  timestamp2: String!
+  curatorNote: String!
+  versionIndex: BigInt!
+  nftAddress: Bytes!
+  nftId: BigInt!
+  contentHash: Bytes!
+  deprecated: Boolean!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type EntryUpdate @entity(immutable: true) {
+  id: ID!
+  deprecatedIndex: BigInt
+  replacementIndex: BigInt
+  updatedIndex: BigInt
+  title: String
+  newVersionIndex: BigInt
+  newCuratorNote: String
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CuratorTransfer @entity(immutable: true) {
+  id: ID!
+  previousCurator: Bytes!
+  newCurator: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Ledger @entity(immutable: false) {
+  id: ID!
+  totalEntries: BigInt!
+  currentCurator: Bytes!
+  lastUpdated: BigInt!
+}

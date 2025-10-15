@@ -1,0 +1,31 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: Lit3Ledger
+    network: base-sepolia  # Set the network to base or base-sepolia
+    source:
+      address: "0xEE755229Db8e2DAA370D88f380EAC46329B66806"  # Replace with your deployed contract address
+      abi: Lit3Ledger
+      startBlock: 32398558  # Replace with your deployment block
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Entry
+        - EntryUpdate
+        - CuratorTransfer
+        - Ledger
+      abis:
+        - name: Lit3Ledger
+          file: ./abis/Lit3Ledger.json
+      eventHandlers:
+        - event: EntryArchived(indexed uint256,string,string,string,string,string,uint256,address,uint256,bytes32)
+          handler: handleEntryArchived
+        - event: EntryDeprecated(indexed uint256,indexed uint256,string,uint256)
+          handler: handleEntryDeprecated
+        - event: CuratorTransferred(indexed address,indexed address)
+          handler: handleCuratorTransferred
+      file: ./src/lit3-ledger.ts

@@ -1,0 +1,467 @@
+# Lit3 Ledger
+
+Un contrato inteligente hecho en Solidity para archivar metadatos versionados de artefactos literarios y fragmentos narrativos en la red blockchain de Base. Solo el Curador designado puede añadir o actualizar entradas, lo que lo hace perfecto para proyectos de narración curada, archivos de literatura digital, o cualquier contenido que requiera timestamping inmutable, verificación de contenido y procedencia.
+
+---
+
+## Características
+
+- **Acceso Solo Curador**: Solo el curador designado puede archivar y actualizar entradas
+- **Almacenamiento Versionado Inmutable**: Las entradas rastrean el historial de versiones con incremento automático en actualizaciones
+- **Verificación de Contenido**: Hash SHA-256 para verificación de texto canónico
+- **Integración NFT**: Conexión opcional a contratos NFT para integración coleccionable
+- **Metadatos Flexibles**: Campos opcionales para datos NFT y hashes de contenido
+- **Soporte Multi-Red**: Despliega a Base Sepolia (testnet) y Base Mainnet
+- **Verificación de Contrato**: Verificación automática de código fuente en BaseScan
+- **Funciones de Consulta**: Recupera entradas por índice, lote, más recientes o por fuente
+- **Integración GraphQL**: Subgraph de The Graph para consultas complejas y actualizaciones en tiempo real
+
+---
+
+## Estructura del proyecto
+
+```
+├── src/
+│   └── Lit3Ledger.sol               # Contrato principal
+├── script/
+│   ├── DeployLit3Ledger.s.sol       # Script de despliegue
+│   └── InteractWithLit3.s.sol       # Script de interacción para consultas/archivo
+├── test/
+│   └── Lit3LedgerTest.t.sol         # Suite de pruebas integral
+├── scripts/
+│   └── normalize-and-hash.js        # Utilidad de normalización de texto y hash SHA-256
+├── .env.example                     # Plantilla de variables de entorno
+├── deploy-lit3ledger.sh             # Script de despliegue multi-red
+├── archive-entry.sh                 # Archivar nuevas entradas con hash opcional
+├── archive-updated-entry.sh         # Actualizar entradas anteriores
+├── query-lit3.sh                    # Consultar entradas existentes
+├── setup-lit3-subgraph.sh           # Script de configuración del Subgraph
+├── foundry.toml                     # Configuración de Foundry
+└── README.md                        # Este archivo
+```
+
+---
+
+## Inicio rápido
+
+### Requisitos previos
+
+- [Foundry](https://book.getfoundry.sh/getting-started/installation)
+- [Node.js](https://nodejs.org/) (v18+) - para normalización de texto
+- Base Sepolia ETH ([faucet](https://faucet.quicknode.com/base))
+- Clave API de BaseScan ([registrarse](https://etherscan.io/apis?id=8453))
+
+### Instalación
+
+1. **Clonar el repositorio:**
+```bash
+git clone https://github.com/lokapal-xyz/registro-lit3
+cd registro-lit3
+```
+
+2. **Instalar dependencias de Foundry:**
+```bash
+forge install
+```
+
+3. **Crear archivo de entorno:**
+```bash
+cp .env.example .env
+# Editar .env con tu clave privada y clave API
+```
+
+4. **Hacer scripts ejecutables:**
+```bash
+chmod +x deploy-lit3ledger.sh archive-entry.sh archive-updated-entry.sh query-lit3.sh setup-lit3-subgraph.sh
+```
+
+5. **Ejecutar pruebas:**
+```bash
+forge test
+```
+
+### Configuración del entorno
+
+Completa el archivo `.env` con el siguiente contenido:
+
+```bash
+# Clave Privada (crea una billetera dedicada para este proyecto)
+PRIVATE_KEY=0xTU_CLAVE_PRIVADA_AQUI
+
+# Claves API
+BASESCAN_API_KEY=tu_clave_api_basescan_aqui
+
+# URLs de RPC (opcional - usa endpoints públicos por defecto)
+BASE_SEPOLIA_RPC_URL=https://base-sepolia.g.alchemy.com/v2/TU_CLAVE
+BASE_RPC_URL=https://base-mainnet.g.alchemy.com/v2/TU_CLAVE
+
+# Direcciones de Contrato (auto-rellenadas después del despliegue)
+CONTRACT_ADDRESS_BASE_SEPOLIA=
+CONTRACT_ADDRESS_BASE=
+
+# Dirección de Contrato Activo (auto-rellena después del despliegue)
+CONTRACT_ADDRESS=
+```
+
+### Despliegue
+
+Despliega a Base Sepolia (testnet) primero:
+
+```bash
+./deploy-lit3ledger.sh base-sepolia
+```
+
+Para despliegue en mainnet (usa ETH real):
+
+```bash
+./deploy-lit3ledger.sh base
+```
+
+El script hará:
+- Desplegar y verificar el contrato
+- Crear archivos JSON de despliegue
+- Actualizar tu `.env` con direcciones de contrato
+- Proporcionar enlaces de BaseScan
+
+---
+
+## Uso
+
+### Archivar nueva entrada
+
+El script `archive-entry.sh` soporta uso flexible desde la línea de comandos para todos los escenarios. Los parámetros opcionales se manejan apropiadamente con valores por defecto sensatos.
+
+#### Uso básico (sin parámetros opcionales)
+
+Archiva una entrada sin integración NFT o hashing de contenido:
+
+```bash
+./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada"
+```
+
+#### Con parámetros opcionales
+
+Todos los parámetros opcionales son posicionales pero pueden omitirse:
+
+```bash
+./archive-entry.sh <red> <título> <fuente> <timestamp1> <timestamp2> <nota_curador> [dirección_nft] [id_nft] [archivo_texto]
+```
+
+**Ejemplos:**
+
+Archivar solo con integración NFT:
+```bash
+./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" 0x1234567890abcdef1234567890abcdef12345678 42
+```
+
+Archivar solo con hashing de archivo de texto (NFT omitido):
+```bash
+./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" none 0 capitulo-uno.md
+```
+
+Archivar con NFT y archivo de texto:
+```bash
+./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" 0x1234...5678 42 capitulo-uno.md
+```
+
+#### Detalles de parámetros opcionales
+
+**`nft_address`** (opcional)
+- Pasa una dirección de Ethereum (0x...) para vincular un NFT
+- Pasa `none` o `0x0` para saltar integración NFT
+- Las direcciones no válidas se convierten automáticamente a dirección cero
+- Por defecto: `none` (sin NFT)
+
+**`nft_id`** (opcional)
+- Pasa un número (0, 1, 2, etc.) para el ID de token del NFT
+- Solo significativo si `nft_address` es válido
+- Por defecto: `0` (sin ID de token)
+
+**`text_file`** (opcional)
+- Ruta a un archivo markdown (p. ej., `capitulo-uno.md`)
+- El script normalizará el texto y calculará el hash SHA-256
+- Requiere que Node.js esté instalado
+- Si se omite o no se encuentra el archivo, usa hash cero
+- Por defecto: omitido (hash cero)
+
+---
+
+### Normalización de texto y hashing
+
+La utilidad `normalize-and-hash.js` aplica normalización estricta para texto de estilo de capítulo:
+
+1. **Eliminación de BOM** - Quita la Marca de Orden de Byte si está presente
+2. **Normalización Unicode** - Convierte a forma NFC (caracteres compuestos)
+3. **Estandarización de terminaciones de línea** - Todas las líneas se convierten a LF (`\n`)
+4. **Eliminación de espacios en blanco finales** - Limpieza por línea
+5. **Normalización de tabulaciones** - Todas las tabulaciones se convierten a 4 espacios
+6. **Líneas en blanco iniciales/finales eliminadas** - Limpia los límites del documento
+7. **Colapso de múltiples líneas en blanco** - Máximo 1 línea en blanco entre contenido
+8. **Salto de línea final único** - Hace cumplir el final de archivo consistente
+
+Esto asegura que el mismo texto canónico siempre produce el mismo hash, habilitando verificación.
+
+**Hashing manual:**
+```bash
+node scripts/normalize-and-hash.js /ruta/a/capitulo.md
+```
+
+Salida: `0x<64-caracteres-hex-hash>`
+
+---
+
+### Consultar entradas
+
+Obtener estado del contrato:
+```bash
+./query-lit3.sh base-sepolia status
+```
+
+Obtener entradas recientes:
+```bash
+./query-lit3.sh base-sepolia get-latest 5
+```
+
+Obtener entrada específica por índice:
+```bash
+./query-lit3.sh base-sepolia get-entry 0
+```
+
+Todos los comandos de consulta disponibles:
+- `status` - Información del contrato y curador actual
+- `get-total` - Número total de entradas archivadas
+- `get-entry <índice>` - Entrada específica por índice
+- `get-latest [cantidad]` - Entradas recientes (por defecto: 5)
+- `get-batch <índice_inicio> <cantidad>` - Lote de entradas
+
+---
+
+### Actualizar entrada
+
+El script `archive-updated-entry.sh` soporta uso flexible desde la línea de comandos para todos los escenarios. Los parámetros opcionales se manejan apropiadamente con valores por defecto sensatos.
+
+#### Uso básico (sin parámetros opcionales)
+
+Actualiza entrada sin integración NFT o hashing de contenido:
+
+```bash
+./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación v2" "Timestamp 1 v2" "Timestamp 2 v2" "Nota de entrada v2"
+```
+
+#### Con parámetros opcionales
+
+Todos los parámetros opcionales son posicionales pero pueden omitirse:
+
+```bash
+./archive-updated-entry.sh <red> <índice_deprecar> <título> <fuente> <timestamp1> <timestamp2> <nota_curador> [dirección_nft] [id_nft] [archivo_texto]
+```
+
+**Ejemplos:**
+
+Actualiza entrada solo con integración NFT:
+```bash
+./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación v2" "Timestamp 1 v2" "Timestamp 2 v2" "Nota de entrada v2" 0x1234567890abcdef1234567890abcdef12345678 42
+```
+
+Actualiza entrada solo con hashing de archivo de texto (NFT omitido):
+```bash
+./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" none 0 capitulo-uno-v2.md
+```
+
+Actualiza entrada con NFT y archivo de texto:
+```bash
+./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" 0x1234567890abcdef1234567890abcdef12345678 42 capitulo-uno-v2.md
+```
+
+---
+
+## API del contrato
+
+### Estructura de entrada
+
+```solidity
+struct Entry {
+    string title;           // Título de la entrada
+    string source;          // Fuente/ubicación de la entrada
+    string timestamp1;      // Primer timestamp (p. ej., hora de recepción)
+    string timestamp2;      // Segundo timestamp (p. ej., hora de transmisión de fuente)
+    string curatorNote;     // Observaciones del curador
+    bool deprecated;        // Bandera de deprecación
+    uint256 versionIndex;   // Número de versión (auto-incrementado)
+    address nftAddress;     // Dirección del contrato NFT (0x0 si ninguno)
+    uint256 nftId;          // ID de token NFT (0 si ninguno)
+    bytes32 contentHash;    // Hash SHA-256 del texto canónico
+}
+```
+
+### Funciones principales
+
+**Archivado:**
+- `archiveEntry(título, fuente, timestamp1, timestamp2, notaCurador, dirección_nft, id_nft, contentHash)` - Añade nueva entrada (solo curador)
+- `archiveUpdatedEntry(título, fuente, timestamp1, timestamp2, notaCurador, dirección_nft, id_nft, contentHash, índice_deprecar)` - Crea nueva versión y depreca anterior (solo curador)
+
+**Consultas:**
+- `getEntry(uint256 índice)` - Obtiene entrada por índice
+- `getTotalEntries()` - Obtiene número total de entradas
+- `getLatestEntries(uint256 cantidad)` - Obtiene entradas recientes
+- `getEntriesBatch(uint256 inicio, uint256 cantidad)` - Obtiene lote de entradas
+
+**Gobernanza:**
+- `initiateCuratorTransfer(address nuevoCurador)` - Inicia transferencia de rol de curador (solo curador)
+- `acceptCuratorTransfer()` - Confirma transferencia de rol de curador
+
+---
+
+## Versionado y actualizaciones
+
+El contrato soporta versionado semántico para actualizaciones de entrada:
+
+1. **Primer archivo**: Entrada creada con `versionIndex = 1`
+2. **Primera actualización**: Usando `archiveUpdatedEntry()` en índice `n` crea versión 2 y depreca versión 1
+3. **Actualizaciones posteriores**: Cada llamada incrementa la versión y depreca la anterior
+
+Tu frontend puede mostrar: "Viendo versión 3 de 5 versiones"
+
+### Flujo de deprecación
+
+```
+archive-entry.sh → Entrada v1 (activa)
+                ↓
+archive-updated-entry.sh → Entrada v1 (deprecated=true), Entrada v2 (activa)
+                         ↓
+archive-updated-entry.sh → Entrada v2 (deprecated=true), Entrada v3 (activa)
+```
+
+---
+
+## Integración con aplicaciones frontend
+
+### Integración con The Graph
+
+Para aplicaciones de producción, integra con The Graph para consultas eficientes:
+
+1. Crea un subgraph indexando los eventos del contrato
+2. Usa consultas GraphQL para filtrado complejo y paginación
+3. Implementa actualizaciones en tiempo real con suscripciones
+
+- Para ver la implementación completa del Subgraph, [**haz clic aquí**](subgraph-deployment-guide.md)
+
+### Integración con Next.js
+
+Mantén contratos y frontend en repositorios separados:
+
+```
+mi-sitio-web/               # Aplicación Next.js
+├── lib/
+│   └── contracts/           # Copia JSONs de despliegue
+└── components/
+
+lit3-ledger/                # Este repositorio
+└── deployments/
+```
+
+Copia archivos de despliegue cuando sea necesario:
+```bash
+cp deployments/base.json ../mi-sitio-web/lib/contracts/
+```
+
+---
+
+## Información de redes
+
+### Base Sepolia (Testnet)
+- Chain ID: 84532
+- RPC: https://sepolia.base.org
+- Explorador: https://sepolia.basescan.org
+- Faucet: https://faucet.quicknode.com/base
+
+### Base Mainnet
+- Chain ID: 8453
+- RPC: https://mainnet.base.org
+- Explorador: https://basescan.org
+
+---
+
+## Consideraciones de seguridad
+
+- **Rol de Curador**: Solo el curador puede añadir/actualizar entradas. Transfiere este rol cuidadosamente
+- **Clave Privada**: Usa una billetera dedicada para operaciones de contrato
+- **Testnet Primero**: Siempre prueba en Base Sepolia antes del despliegue en mainnet
+- **Verificación de Hash de Contenido**: Verifica hashes canónicos ejecutando la normalización localmente
+- **Inmutabilidad**: Solo la última versión es "activa" (`deprecated = false`). Todas las versiones permanecen en la cadena para auditoría
+
+---
+
+## Pruebas
+
+Ejecuta la suite de pruebas integral:
+
+```bash
+# Ejecutar todas las pruebas
+forge test
+
+# Ejecutar con reporte de gas
+forge test --gas-report
+
+# Ejecutar prueba específica
+forge test --match-test testArchiveEntry
+
+# Ejecutar con salida verbose
+forge test -vvv
+```
+
+Las pruebas cubren:
+- Despliegue e inicialización
+- Archivado de entrada y versionado
+- Archivado de entrada actualizada con depreciación
+- Control de acceso (funciones solo curador)
+- Funciones de recuperación y casos límite
+- Emisión de eventos
+- Pruebas de cadena de versionado
+- Pruebas fuzz para casos límite
+
+---
+
+## Casos de uso
+
+Este patrón de contrato es adecuado para:
+- Proyectos de literatura digital y narración
+- Archivo de contenido con procedencia y versionado
+- Almacenamiento de metadatos con timestamp
+- Proyectos de arte digital curado con múltiples versiones
+- Investigación académica con registros inmutables y control de versiones
+- Comunidades de escritura creativa con flujos editoriales
+- Proyectos de ficción interactiva con narrativas ramificadas
+- Plataformas de publicación que requieren verificación de contenido
+
+---
+
+## Aviso de seguridad
+
+Este contrato **no ha sido auditado formalmente** por una firma de seguridad de terceros. Aunque el código ha sido ampliamente probado en testnet Sepolia y revisado para vulnerabilidades comunes, aún puede contener bugs o problemas de seguridad.
+
+**Úsalo bajo tu propio riesgo.** Si pretendes desplegar este contrato con activos reales o valor significativo:
+
+- Considera obtener una auditoría de seguridad formal de una firma reputada
+- Despliega en testnet primero y prueba a fondo con tu caso de uso
+- Haz que el contrato sea revisado por desarrolladores Solidity experimentados
+- Usa suposiciones conservadoras sobre vulnerabilidades potenciales
+- Considera implementar estrategias de despliegue gradual y monitoreo
+
+Los autores y contribuidores no son responsables por pérdidas o daños resultantes del uso de este código.
+
+---
+
+## Licencia
+
+Licencia MIT - ver archivo LICENSE para detalles
+
+## Soporte
+
+- Crea un issue para bugs o solicitudes de características
+- Verifica issues existentes antes de crear nuevos
+- Proporciona información detallada incluyendo red, hashes de transacciones y mensajes de error
+
+---
+
+Construido con Foundry por lokapal.eth
