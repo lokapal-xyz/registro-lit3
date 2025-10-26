@@ -28,6 +28,8 @@ export function handleEntryArchived(event: EntryArchivedEvent): void {
   entry.nftAddress = event.params.nftAddress
   entry.nftId = event.params.nftId
   entry.contentHash = event.params.contentHash
+  entry.permawebLink = event.params.permawebLink
+  entry.license = event.params.license
   entry.deprecated = false
   
   // Add blockchain metadata

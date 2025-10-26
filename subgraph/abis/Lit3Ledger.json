@@ -112,6 +112,18 @@
         "internalType": "bytes32",
         "name": "contentHash",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "permawebLink",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "license",
+        "type": "string"
       }
     ],
     "name": "EntryArchived",

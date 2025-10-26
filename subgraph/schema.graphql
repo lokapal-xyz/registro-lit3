@@ -10,6 +10,8 @@ type Entry @entity(immutable: true) {
   nftAddress: Bytes!
   nftId: BigInt!
   contentHash: Bytes!
+  permawebLink: String!
+  license: String!
   deprecated: Boolean!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
