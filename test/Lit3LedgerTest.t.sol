@@ -16,6 +16,8 @@ contract Lit3LedgerTest is Test {
     string constant TEST_TIMESTAMP2 = "Lanka Transmission Time";
     string constant TEST_CURATOR_NOTE = "Initial entry of the narrative";
     bytes32 constant TEST_CONTENT_HASH = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
+    string constant TEST_PERMAWEB_LINK = "ipfs://QmTest123456789";
+    string constant TEST_LICENSE = "CC BY-SA 4.0";
     address constant TEST_NFT_ADDRESS = 0x0000000000000000000000000000000000000000;
     uint256 constant TEST_NFT_ID = 0;
 
@@ -51,7 +53,9 @@ contract Lit3LedgerTest is Test {
             TEST_CURATOR_NOTE,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
 
         assertEq(lit3Ledger.getTotalEntries(), 1);
@@ -67,6 +71,8 @@ contract Lit3LedgerTest is Test {
         assertEq(entry.nftAddress, TEST_NFT_ADDRESS);
         assertEq(entry.nftId, TEST_NFT_ID);
         assertEq(entry.contentHash, TEST_CONTENT_HASH);
+        assertEq(entry.permawebLink, TEST_PERMAWEB_LINK);
+        assertEq(entry.license, TEST_LICENSE);
     }
 
     function test_ArchiveEntry_RevertWhen_NotCurator() public {
@@ -81,7 +87,9 @@ contract Lit3LedgerTest is Test {
             TEST_CURATOR_NOTE,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
     }
 
@@ -99,7 +107,9 @@ contract Lit3LedgerTest is Test {
             1,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
         
         lit3Ledger.archiveEntry(
@@ -110,7 +120,9 @@ contract Lit3LedgerTest is Test {
             TEST_CURATOR_NOTE,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
     }
 
@@ -129,12 +141,16 @@ contract Lit3LedgerTest is Test {
             TEST_CURATOR_NOTE,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
 
         // Archive updated entry
         string memory updatedNote = "Corrected entry with additional context";
         bytes32 updatedHash = 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890;
+        string memory updatedLink = "ipfs://QmUpdated987654321";
+        string memory updatedLicense = "CC BY-NC-SA 4.0";
 
         vm.prank(curator);
         lit3Ledger.archiveUpdatedEntry(
@@ -146,6 +162,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             updatedHash,
+            updatedLink,
+            updatedLicense,
             0 // deprecateIndex
         );
 
@@ -163,6 +181,8 @@ contract Lit3LedgerTest is Test {
         assertEq(newEntry.versionIndex, 2);
         assertEq(newEntry.curatorNote, updatedNote);
         assertEq(newEntry.contentHash, updatedHash);
+        assertEq(newEntry.permawebLink, updatedLink);
+        assertEq(newEntry.license, updatedLicense);
     }
 
     function test_ArchiveUpdatedEntry_RevertWhen_InvalidIndex() public {
@@ -178,6 +198,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE,
             999
         );
     }
@@ -193,7 +215,9 @@ contract Lit3LedgerTest is Test {
             "Note 1",
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
         
         lit3Ledger.archiveEntry(
@@ -204,7 +228,9 @@ contract Lit3LedgerTest is Test {
             "Note 2",
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
 
         // Deprecate entry 0
@@ -217,6 +243,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE,
             0
         );
 
@@ -231,6 +259,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE,
             0
         );
         vm.stopPrank();
@@ -246,7 +276,9 @@ contract Lit3LedgerTest is Test {
             TEST_CURATOR_NOTE,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
 
         vm.prank(curator);
@@ -262,6 +294,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE,
             0
         );
     }
@@ -424,7 +458,9 @@ contract Lit3LedgerTest is Test {
             "Archived by new curator",
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
         
         assertEq(lit3Ledger.getTotalEntries(), 1);
@@ -440,7 +476,9 @@ contract Lit3LedgerTest is Test {
             "Should fail",
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
     }
 
@@ -460,7 +498,9 @@ contract Lit3LedgerTest is Test {
             "Version 1",
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
         
         // Archive v2 (deprecate v1)
@@ -473,6 +513,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE,
             0
         );
         
@@ -486,6 +528,8 @@ contract Lit3LedgerTest is Test {
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
             TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE,
             1
         );
         
@@ -530,7 +574,9 @@ contract Lit3LedgerTest is Test {
             _curatorNote,
             TEST_NFT_ADDRESS,
             TEST_NFT_ID,
-            TEST_CONTENT_HASH
+            TEST_CONTENT_HASH,
+            TEST_PERMAWEB_LINK,
+            TEST_LICENSE
         );
 
         assertEq(lit3Ledger.getTotalEntries(), 1);
@@ -559,7 +605,9 @@ contract Lit3LedgerTest is Test {
                 "Test curator note",
                 TEST_NFT_ADDRESS,
                 TEST_NFT_ID,
-                TEST_CONTENT_HASH
+                TEST_CONTENT_HASH,
+                TEST_PERMAWEB_LINK,
+                TEST_LICENSE
             );
         }
         vm.stopPrank();

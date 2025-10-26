@@ -29,7 +29,7 @@ Un contrato inteligente hecho en Solidity para archivar metadatos versionados de
 ├── test/
 │   └── Lit3LedgerTest.t.sol         # Suite de pruebas integral
 ├── scripts/
-│   └── normalize-and-hash.js        # Utilidad de normalización de texto y hash SHA-256
+│   └── hnp1.js                      # Utilidad de normalización de texto y hash SHA-256
 ├── .env.example                     # Plantilla de variables de entorno
 ├── deploy-lit3ledger.sh             # Script de despliegue multi-red
 ├── archive-entry.sh                 # Archivar nuevas entradas con hash opcional
@@ -129,66 +129,90 @@ El script hará:
 
 ### Archivar nueva entrada
 
-El script `archive-entry.sh` soporta uso flexible desde la línea de comandos para todos los escenarios. Los parámetros opcionales se manejan apropiadamente con valores por defecto sensatos.
+El script `archive-entry.sh` utiliza **argumentos con nombre (banderas)**, lo que lo hace limpio y fácil de usar con los parámetros opcionales.
 
-#### Uso básico (sin parámetros opcionales)
+#### Sintaxis del comando
 
-Archiva una entrada sin integración NFT o hashing de contenido:
-
-```bash
-./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada"
-```
-
-#### Con parámetros opcionales
-
-Todos los parámetros opcionales son posicionales pero pueden omitirse:
+El script requiere la bandera `--network`, pero todos los demás parámetros son opcionales y pueden pasarse en cualquier orden.
 
 ```bash
-./archive-entry.sh <red> <título> <fuente> <timestamp1> <timestamp2> <nota_curador> [dirección_nft] [id_nft] [archivo_texto]
+./archive-entry.sh --network <red> [BANDERAS OPCIONALES...]
 ```
 
-**Ejemplos:**
+#### Banderas opcionales
 
-Archivar solo con integración NFT:
+| Bandera (Corta/Larga) | Descripción | Valor predeterminado en el contrato |
+| :--- | :--- | :--- |
+| **-t, --title** | Título de la entrada (p. ej., "Capítulo Uno") | `""` (cadena vacía) |
+| **-s, --source** | Fuente/ubicación de la entrada | `""` (cadena vacía) |
+| **-a, --timestamp1** | Primer sello de tiempo (p. ej., "2025-10-11 14:30:00 UTC") | `""` (cadena vacía) |
+| **-b, --timestamp2** | Segundo sello de tiempo (p. ej., "Hora de Lanka") | `""` (cadena vacía) |
+| **-c, --curator-note** | Observaciones del Curador | `""` (cadena vacía) |
+| **-f, --nft-address** | Dirección del contrato NFT (p. ej., 0x...) | `0x0...0` (dirección cero) |
+| **-d, --nft-id** | ID del token NFT | `0` |
+| **-l, --text-file** | Ruta a un archivo para el hash de contenido (requiere Node.js) | `0x0...0` (hash cero) |
+| **-x, --permaweb-link** | Enlace IPFS/Arweave (p. ej., ipfs://Qm...) | `""` (cadena vacía) |
+| **-p, --license** | Declaración de licencia (p. ej., 'CC BY-SA 4.0') | `""` (cadena vacía) |
+
+#### Ejemplos
+
+**Uso básico (Mínimo requerido: Red)**
+Archivar una entrada usando solo la bandera de red requerida, más un título y una nota para contexto.
+
 ```bash
-./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" 0x1234567890abcdef1234567890abcdef12345678 42
+./archive-entry.sh -n base-sepolia -t "Capítulo Uno" -c "Primera entrada"
 ```
 
-Archivar solo con hashing de archivo de texto (NFT omitido):
+**Con integración NFT**
+Archivar una entrada y asociarla con un NFT específico. Ten en cuenta que las banderas no utilizadas (`--text-file`, etc.) simplemente se omiten.
+
 ```bash
-./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" none 0 capitulo-uno.md
+./archive-entry.sh \
+  --network base-sepolia \
+  --title "Capítulo Uno" \
+  --source "Nodo de Archivo" \
+  --timestamp1 "2025-10-11 14:30:00 UTC" \
+  --curator-note "Primera entrada" \
+  --nft-address 0x1234567890abcdef1234567890abcdef12345678 \
+  --nft-id 42
 ```
 
-Archivar con NFT y archivo de texto:
+**Con hash de contenido (Marco de Permanencia)**
+Archivar una entrada, calcular un hash de contenido desde un archivo local, proporcionar un enlace permaweb y una licencia.
+
 ```bash
-./archive-entry.sh base-sepolia "Capítulo Uno" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" 0x1234...5678 42 capitulo-uno.md
+./archive-entry.sh \
+  -n base-sepolia \
+  -t "Capítulo Uno" \
+  -c "Nota de entrada con hash" \
+  -l capítulo-uno.md \
+  -x "ipfs://QmTest123" \
+  -p "CC BY-SA 4.0"
 ```
 
-#### Detalles de parámetros opcionales
+**Entrada completa**
+Archivar una entrada con todos los campos opcionales.
 
-**`nft_address`** (opcional)
-- Pasa una dirección de Ethereum (0x...) para vincular un NFT
-- Pasa `none` o `0x0` para saltar integración NFT
-- Las direcciones no válidas se convierten automáticamente a dirección cero
-- Por defecto: `none` (sin NFT)
-
-**`nft_id`** (opcional)
-- Pasa un número (0, 1, 2, etc.) para el ID de token del NFT
-- Solo significativo si `nft_address` es válido
-- Por defecto: `0` (sin ID de token)
-
-**`text_file`** (opcional)
-- Ruta a un archivo markdown (p. ej., `capitulo-uno.md`)
-- El script normalizará el texto y calculará el hash SHA-256
-- Requiere que Node.js esté instalado
-- Si se omite o no se encuentra el archivo, usa hash cero
-- Por defecto: omitido (hash cero)
+```bash
+./archive-entry.sh \
+  --network base-sepolia \
+  --title "Introduccion" \
+  --source "Libro 0" \
+  --timestamp1 "2025-10-11 UTC" \
+  --timestamp2 "2025-12-11 UTC" \
+  --curator-note "Primera entrada" \
+  --nft-address 0xfC295DBCbB9CCdA53B152AA3fc64dB84d6C538fF \
+  --nft-id 0 \
+  --text-file placeholder.md \
+  --permaweb-link "ipfs://bafkreihrm3tvrubern7kkpxr65ta2zu2cmdkfbfqmcth4eoefly37ke4xq" \
+  --license "CC BY-NC-SA 4.0"
+```
 
 ---
 
 ### Normalización de texto y hashing
 
-La utilidad `normalize-and-hash.js` aplica normalización estricta para texto de estilo de capítulo:
+La utilidad `hnp1.js` aplica normalización estricta para texto de estilo de capítulo:
 
 1. **Eliminación de BOM** - Quita la Marca de Orden de Byte si está presente
 2. **Normalización Unicode** - Convierte a forma NFC (caracteres compuestos)
@@ -203,7 +227,7 @@ Esto asegura que el mismo texto canónico siempre produce el mismo hash, habilit
 
 **Hashing manual:**
 ```bash
-node scripts/normalize-and-hash.js /ruta/a/capitulo.md
+node scripts/hnp1.js /ruta/a/capitulo.md
 ```
 
 Salida: `0x<64-caracteres-hex-hash>`
@@ -238,39 +262,50 @@ Todos los comandos de consulta disponibles:
 
 ### Actualizar entrada
 
-El script `archive-updated-entry.sh` soporta uso flexible desde la línea de comandos para todos los escenarios. Los parámetros opcionales se manejan apropiadamente con valores por defecto sensatos.
+El script `archive-updated-entry.sh` también utiliza **argumentos con nombre (banderas)**, requiriendo la red y el índice de la entrada deprecada.
 
-#### Uso básico (sin parámetros opcionales)
+#### Sintaxis del comando
 
-Actualiza entrada sin integración NFT o hashing de contenido:
+El script requiere las banderas `--network` y `--deprecate-index`. Todos los demás parámetros son opcionales y pueden pasarse en cualquier orden.
 
 ```bash
-./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación v2" "Timestamp 1 v2" "Timestamp 2 v2" "Nota de entrada v2"
+./archive-updated-entry.sh --network <red> --deprecate-index <índice> [BANDERAS OPCIONALES...]
 ```
 
-#### Con parámetros opcionales
+#### Banderas opcionales
 
-Todos los parámetros opcionales son posicionales pero pueden omitirse:
+Las banderas opcionales son las mismas que en `archive-entry.sh` (ver tabla arriba).
+
+#### Ejemplos
+
+**Actualización básica (Mínimo requerido: red e índice)**
+Actualizar una entrada, cambiando solo el título y la nota del curador.
 
 ```bash
-./archive-updated-entry.sh <red> <índice_deprecar> <título> <fuente> <timestamp1> <timestamp2> <nota_curador> [dirección_nft] [id_nft] [archivo_texto]
+./archive-updated-entry.sh \
+  -n base-sepolia \
+  -i 5 \
+  -t "Capítulo Uno v2" \
+  -c "Actualizado con correcciones"
 ```
 
-**Ejemplos:**
+**Actualización completa**
+Actualizar una entrada con todos los campos opcionales.
 
-Actualiza entrada solo con integración NFT:
 ```bash
-./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación v2" "Timestamp 1 v2" "Timestamp 2 v2" "Nota de entrada v2" 0x1234567890abcdef1234567890abcdef12345678 42
-```
-
-Actualiza entrada solo con hashing de archivo de texto (NFT omitido):
-```bash
-./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" none 0 capitulo-uno-v2.md
-```
-
-Actualiza entrada con NFT y archivo de texto:
-```bash
-./archive-updated-entry.sh base-sepolia 0 "Capítulo Uno v2" "Ubicación" "Timestamp 1" "Timestamp 2" "Nota de entrada" 0x1234567890abcdef1234567890abcdef12345678 42 capitulo-uno-v2.md
+./archive-updated-entry.sh \
+  --network base-sepolia \
+  --deprecate-index 0 \
+  --title "Introduccion" \
+  --source "Libro 0" \
+  --timestamp1 "2025-10-11 UTC" \
+  --timestamp2 "2025-12-11 UTC" \
+  --curator-note "Primera entrada" \
+  --nft-address 0xfC295DBCbB9CCdA53B152AA3fc64dB84d6C538fF \
+  --nft-id 0 \
+  --text-file placeholder.md \
+  --permaweb-link "ipfs://bafkreihrm3tvrubern7kkpxr65ta2zu2cmdkfbfqmcth4eoefly37ke4xq" \
+  --license "CC BY-NC-SA 4.0"
 ```
 
 ---
@@ -281,6 +316,7 @@ Actualiza entrada con NFT y archivo de texto:
 
 ```solidity
 struct Entry {
+    // Items del marco de registro
     string title;           // Título de la entrada
     string source;          // Fuente/ubicación de la entrada
     string timestamp1;      // Primer timestamp (p. ej., hora de recepción)
@@ -288,17 +324,21 @@ struct Entry {
     string curatorNote;     // Observaciones del curador
     bool deprecated;        // Bandera de deprecación
     uint256 versionIndex;   // Número de versión (auto-incrementado)
+    // Items del marco de tokens
     address nftAddress;     // Dirección del contrato NFT (0x0 si ninguno)
     uint256 nftId;          // ID de token NFT (0 si ninguno)
+    // Items del marco de permanencia
     bytes32 contentHash;    // Hash SHA-256 del texto canónico
+    string permawebLink;    // Referencia de almacenamiento decentralizado
+    string license;         // Declaracion de licencia
 }
 ```
 
 ### Funciones principales
 
 **Archivado:**
-- `archiveEntry(título, fuente, timestamp1, timestamp2, notaCurador, dirección_nft, id_nft, contentHash)` - Añade nueva entrada (solo curador)
-- `archiveUpdatedEntry(título, fuente, timestamp1, timestamp2, notaCurador, dirección_nft, id_nft, contentHash, índice_deprecar)` - Crea nueva versión y depreca anterior (solo curador)
+- `archiveEntry(título, fuente, timestamp1, timestamp2, notaCurador, dirección_nft, id_nft, contentHash, permawebLink, license)` - Añade nueva entrada (solo curador)
+- `archiveUpdatedEntry(título, fuente, timestamp1, timestamp2, notaCurador, dirección_nft, id_nft, contentHash, permawebLink, license, índice_deprecar)` - Crea nueva versión y depreca anterior (solo curador)
 
 **Consultas:**
 - `getEntry(uint256 índice)` - Obtiene entrada por índice

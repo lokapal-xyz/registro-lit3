@@ -184,7 +184,7 @@ EOF
     echo ""
     echo -e "${YELLOW}Next steps:${NC}"
     echo "1. Test: ./query-lit3.sh ${NETWORK} status"
-    echo "2. Archive: ./archive-entry.sh ${NETWORK} \"Title\" \"Source\" \"Time 1\" \"Time 2\" \"Log\""
+    echo "2. Archive: ./archive-entry.sh ${NETWORK} \"Title\" \"Source\" \"Time 1\" \"Time 2\" \"Log\" \"Link\" \"License\""
     
 else
     echo -e "${RED}❌ Deployment failed${NC}"

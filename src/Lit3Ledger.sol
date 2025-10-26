@@ -24,6 +24,7 @@ contract Lit3Ledger {
     // Types //
     ///////////
     struct Entry {
+        // Ledger Framework items
         string title;
         string source;
         string timestamp1;
@@ -31,9 +32,13 @@ contract Lit3Ledger {
         string curatorNote;
         bool deprecated;
         uint256 versionIndex;
+        // Token Framework items
         address nftAddress;
         uint256 nftId;
+        // Permanence Framework items
         bytes32 contentHash;
+        string permawebLink;
+        string license;
     }
 
 
@@ -58,7 +63,9 @@ contract Lit3Ledger {
         uint256 versionIndex,
         address nftAddress,
         uint256 nftId,
-        bytes32 contentHash
+        bytes32 contentHash,
+        string permawebLink,
+        string license
     );
 
     event EntryDeprecated(
@@ -109,6 +116,8 @@ contract Lit3Ledger {
      * @param _nftAddress Address of associated NFT contract (0x0 if none)
      * @param _nftId Token ID of associated NFT (0 if none)
      * @param _contentHash SHA-256 hash of the canonical content (0x0 if not provided)
+     * @param _permawebLink Decentralized storage reference (e.g., ipfs://..., ar://..., empty if none)
+     * @param _license License declaration (e.g., "CC BY-SA 4.0", "All Rights Reserved", empty if not declared)
      */
     function archiveEntry(
         string memory _title,
@@ -118,7 +127,9 @@ contract Lit3Ledger {
         string memory _curatorNote,
         address _nftAddress,
         uint256 _nftId,
-        bytes32 _contentHash
+        bytes32 _contentHash,
+        string memory _permawebLink,
+        string memory _license
     ) public onlyCurator {
         entries.push(Entry(
             _title,
@@ -130,7 +141,9 @@ contract Lit3Ledger {
             1,                  // versionIndex starts at 1
             _nftAddress,
             _nftId,
-            _contentHash
+            _contentHash,
+            _permawebLink,
+            _license
         ));
 
         emit EntryArchived(
@@ -143,7 +156,9 @@ contract Lit3Ledger {
             1,
             _nftAddress,
             _nftId,
-            _contentHash
+            _contentHash,
+            _permawebLink,
+            _license
         );
     }
 
@@ -157,6 +172,8 @@ contract Lit3Ledger {
      * @param _nftAddress Address of associated NFT contract (0x0 if none)
      * @param _nftId Token ID of associated NFT (0 if none)
      * @param _contentHash SHA-256 hash of canonical content (0x0 if not provided)
+     * @param _permawebLink Decentralized storage reference (empty if none)
+     * @param _license License declaration (empty if not declared)
      * @param _deprecateIndex Index of the entry to deprecate and replace
      */
     function archiveUpdatedEntry(
@@ -168,6 +185,8 @@ contract Lit3Ledger {
         address _nftAddress,
         uint256 _nftId,
         bytes32 _contentHash,
+        string memory _permawebLink,
+        string memory _license,
         uint256 _deprecateIndex
     ) public onlyCurator {
         if (_deprecateIndex >= entries.length) {
@@ -196,7 +215,9 @@ contract Lit3Ledger {
             newVersionIndex,    // incremented version
             _nftAddress,
             _nftId,
-            _contentHash
+            _contentHash,
+            _permawebLink,
+            _license
         ));
 
         uint256 newIndex = entries.length - 1;
@@ -218,7 +239,9 @@ contract Lit3Ledger {
             newVersionIndex,
             _nftAddress,
             _nftId,
-            _contentHash
+            _contentHash,
+            _permawebLink,
+            _license
         );
     }
 

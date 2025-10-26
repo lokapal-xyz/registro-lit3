@@ -70,6 +70,8 @@ contract InteractWithLit3 is Script {
         address nftAddress = vm.envAddress("NFT_ADDRESS");
         uint256 nftId = vm.envUint("NFT_ID");
         bytes32 contentHash = vm.envBytes32("CONTENT_HASH");
+        string memory permawebLink = vm.envOr("PERMAWEB_LINK", string(""));
+        string memory license = vm.envOr("LICENSE", string(""));
 
         console.log("=== ARCHIVING ENTRY ===");
         console.log("Title:", title);
@@ -80,9 +82,22 @@ contract InteractWithLit3 is Script {
         console.log("NFT Address:", nftAddress);
         console.log("NFT ID:", nftId);
         console.logBytes32(contentHash);
+        console.log("Permaweb Link:", permawebLink);
+        console.log("License:", license);
 
         vm.startBroadcast();
-        lit3.archiveEntry(title, source, timestamp1, timestamp2, curatorNote, nftAddress, nftId, contentHash);
+        lit3.archiveEntry(
+            title,
+            source,
+            timestamp1,
+            timestamp2,
+            curatorNote,
+            nftAddress,
+            nftId,
+            contentHash,
+            permawebLink,
+            license
+        );
         vm.stopBroadcast();
 
         console.log("Entry archived successfully!");
@@ -101,14 +116,30 @@ contract InteractWithLit3 is Script {
         address nftAddress = vm.envAddress("NFT_ADDRESS");
         uint256 nftId = vm.envUint("NFT_ID");
         bytes32 contentHash = vm.envBytes32("CONTENT_HASH");
+        string memory permawebLink = vm.envOr("PERMAWEB_LINK", string(""));
+        string memory license = vm.envOr("LICENSE", string(""));
         uint256 deprecateIndex = vm.envUint("DEPRECATE_INDEX");
 
         console.log("=== ARCHIVING UPDATED ENTRY ===");
         console.log("Title:", title);
         console.log("Deprecating index:", deprecateIndex);
+        console.log("Permaweb Link:", permawebLink);
+        console.log("License:", license);
 
         vm.startBroadcast();
-        lit3.archiveUpdatedEntry(title, source, timestamp1, timestamp2, curatorNote, nftAddress, nftId, contentHash, deprecateIndex);
+        lit3.archiveUpdatedEntry(
+            title,
+            source,
+            timestamp1,
+            timestamp2,
+            curatorNote,
+            nftAddress,
+            nftId,
+            contentHash,
+            permawebLink,
+            license,
+            deprecateIndex
+        );
         vm.stopBroadcast();
 
         console.log("Updated entry archived and previous version deprecated!");
@@ -210,6 +241,8 @@ contract InteractWithLit3 is Script {
         console.log("NFT Address:", entry.nftAddress);
         console.log("NFT ID:", entry.nftId);
         console.logBytes32(entry.contentHash);
+        console.log("Permaweb Link:", entry.permawebLink);
+        console.log("License:", entry.license);
     }
 
     /**
@@ -220,6 +253,9 @@ contract InteractWithLit3 is Script {
         console.log("Source:", entry.source);
         console.log("Version:", entry.versionIndex);
         console.log("Deprecated:", entry.deprecated);
+        if (bytes(entry.license).length > 0) {
+            console.log("License:", entry.license);
+        }
     }
 
     /**

@@ -86,7 +86,7 @@ function computeHash(content) {
  */
 function main() {
   if (process.argv.length < 3) {
-    console.error('Usage: node normalize-and-hash.js <input_file>');
+    console.error('Usage: node hnp1.js <input_file>');
     process.exit(1);
   }
 
